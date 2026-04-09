@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "513567433741",
+    "project_id": "hardware-app-fa0f9",
+    "storage_bucket": "hardware-app-fa0f9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:513567433741:android:886e77f3a73d3fbcf2a144",
+        "android_client_info": {
+          "package_name": "com.example.robo_survey"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmY5z21nyB2DHTVIZ5mogLi-tbkzCQr_U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
