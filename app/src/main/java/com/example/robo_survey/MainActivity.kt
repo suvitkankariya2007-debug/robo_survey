@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.SettingsRemote
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -22,10 +25,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.robo_survey.ui.RobotViewModel
-import com.example.robo_survey.ui.screens.AlertScreen
 import com.example.robo_survey.ui.screens.ControlScreen
 import com.example.robo_survey.ui.screens.DashboardScreen
-import com.example.robo_survey.ui.screens.EventLogsScreen
+import com.example.robo_survey.ui.screens.GalleryScreen
+import com.example.robo_survey.ui.screens.LiveFeedScreen
+import com.example.robo_survey.ui.screens.MapScreen
 import com.example.robo_survey.ui.theme.Robo_surveyTheme
 
 class MainActivity : ComponentActivity() {
@@ -42,16 +46,17 @@ class MainActivity : ComponentActivity() {
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Dashboard : Screen("dashboard", "Dashboard", Icons.Default.Dashboard)
+    object Live : Screen("live", "Live", Icons.Default.Videocam)
     object Control : Screen("control", "Control", Icons.Default.SettingsRemote)
-    object Logs : Screen("logs", "Logs", Icons.Default.History)
-    object Alert : Screen("alert", "Alert", Icons.Default.Notifications)
+    object Map : Screen("map", "Map", Icons.Default.Map)
+    object Gallery : Screen("gallery", "Gallery", Icons.Default.PhotoLibrary)
 }
 
 @Composable
 fun MainApp() {
     val navController = rememberNavController()
     val viewModel: RobotViewModel = viewModel()
-    val items = listOf(Screen.Dashboard, Screen.Control, Screen.Logs, Screen.Alert)
+    val items = listOf(Screen.Dashboard, Screen.Live, Screen.Control, Screen.Map, Screen.Gallery)
 
     Scaffold(
         bottomBar = {
@@ -81,9 +86,10 @@ fun MainApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Dashboard.route) { DashboardScreen(viewModel) }
+            composable(Screen.Live.route) { LiveFeedScreen(viewModel) }
             composable(Screen.Control.route) { ControlScreen(viewModel) }
-            composable(Screen.Logs.route) { EventLogsScreen(viewModel) }
-            composable(Screen.Alert.route) { AlertScreen() }
+            composable(Screen.Map.route) { MapScreen(viewModel) }
+            composable(Screen.Gallery.route) { GalleryScreen(viewModel) }
         }
     }
 }

@@ -58,6 +58,9 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.firebase.messaging)
 
+    // Image loading
+    implementation(libs.coil.compose)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
