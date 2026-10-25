@@ -1,174 +1,99 @@
 # Robo Survey
 
-Android application for monitoring and controlling a surveillance robot through a Firebase-backed data layer.
+**An Android interface for robot telemetry, monitoring, and control.**
 
-## Overview
+Robo Survey uses Kotlin, Jetpack Compose, and Firebase Realtime Database to bring robot status, sensor readings, waypoints, images, and commands into a single mobile interface.
 
-Robo Survey was built as a hackathon-style robotics interface that connects a mobile application to robot telemetry and control data. The app focuses on giving an operator a single place to view robot status, sensor readings, captured images, path information, alerts, and control commands.
+[App navigation](app/src/main/java/com/example/robo_survey/MainActivity.kt) · [ViewModel](app/src/main/java/com/example/robo_survey/ui/RobotViewModel.kt) · [Data models](app/src/main/java/com/example/robo_survey/data/RobotData.kt) · [Screens](app/src/main/java/com/example/robo_survey/ui/screens)
 
-The current implementation is written in Kotlin with Jetpack Compose and uses Firebase Realtime Database as the shared communication layer.
+## What is implemented
 
-## Core features
+| Feature | Source behavior |
+| --- | --- |
+| Dashboard | Displays robot status, battery, alerts, connectivity, and sensor values |
+| Live feed | Reads a camera-stream URL from Firebase configuration |
+| Control | Writes operator commands and operating-mode changes |
+| Map | Displays robot waypoint data |
+| Gallery | Displays captured-image records |
+| Supporting screens | Alert and event-log screen implementations are present in source |
+| Reactive state | Firebase listeners update StateFlow values exposed by `RobotViewModel` |
 
-- **Dashboard** for robot status, battery, alert level, connection state, and sensor information
-- **Live-feed screen** driven by a remotely configured camera-stream URL
-- **Control screen** for sending robot commands and changing operating mode
-- **Map/path view** for displaying timestamped robot waypoints
-- **Gallery** for captured surveillance images
-- **Event logging** for system, intrusion, and battery events
-- **Robot-arm state** for base, shoulder, elbow, and gripper values
-- **Firebase-backed state synchronization** using database listeners
-- **StateFlow-based UI state** through an Android ViewModel
+The main bottom navigation currently exposes **five** screens: Dashboard, Live, Control, Map, and Gallery. Alert and event-log screen source files are additional implementations, not extra bottom-navigation destinations.
 
-## Data model
+**Status:** Android project implementation. A functioning robot, telemetry producer, camera stream, and configured Firebase backend are external requirements; their availability is not implied by this repository.
 
-The application tracks several types of robot data:
+## Data flow
 
-### Robot status
-- status
-- battery level
-- intrusion flag
-- alert level
-- connection state
-- operating mode
+1. A robot-side producer writes status, telemetry, waypoints, images, and logs into Firebase.
+2. `RobotViewModel` subscribes with `ValueEventListener` callbacks.
+3. StateFlow values drive the Compose interface.
+4. Operator commands are written back to Firebase for a robot-side consumer to handle.
 
-### Sensor readings
-- ultrasonic distance
-- temperature
-- light level
-- motion-detection state
-- timestamp
+The robot-side producer/consumer is not included here.
 
-### Path data
-- x/y coordinates
-- heading
-- timestamp
+## Firebase contract
 
-### Captures
-- image URL
-- timestamp
-- label such as Patrol or Intrusion
+| Database path | Contents or action |
+| --- | --- |
+| `robot/status` | `status`, `batteryLevel`, `isIntrusionDetected`, `alertLevel`, `isConnected`, `mode` |
+| `robot/sensors` | `ultrasonicDistance`, `temperature`, `lightLevel`, `motionDetected`, `timestamp` |
+| `robot/path` | Child records with `x`, `y`, `heading`, `timestamp` |
+| `robot/captures` | Child records with `imageUrl`, `timestamp`, `label` |
+| `robot/logs` | Child records with `id`, `type`, `message`, `timestamp` |
+| `robot/arm` | `baseAngle`, `shoulderAngle`, `elbowAngle`, `gripperState` |
+| `robot/config/camUrl` | Camera-stream URL string |
+| `robot/command` | Operator command string written by the app |
+| `robot/status/mode` | Operating-mode string written by the app |
 
-### Arm state
-- base angle
-- shoulder angle
-- elbow angle
-- gripper state
+Use the exact field names in [RobotData.kt](app/src/main/java/com/example/robo_survey/data/RobotData.kt); an empty Firebase database will not produce a realistic monitoring demonstration.
 
-## Architecture
+## Open and run
 
-```text
-Android UI (Jetpack Compose)
-        │
-        ▼
-RobotViewModel
-        │
-        ├── StateFlow<RobotStatus>
-        ├── StateFlow<SensorReading>
-        ├── StateFlow<List<PathWaypoint>>
-        ├── StateFlow<List<CapturedImage>>
-        ├── StateFlow<List<EventLog>>
-        └── StateFlow<ArmState>
-        │
-        ▼
-Firebase Realtime Database
-        │
-        ├── robot/status
-        ├── robot/sensors
-        ├── robot/path
-        ├── robot/captures
-        ├── robot/logs
-        ├── robot/command
-        ├── robot/config/camUrl
-        └── robot/arm
+```bash
+git clone https://github.com/suvitkankariya2007-debug/robo_survey.git
+cd robo_survey
 ```
 
-## App navigation
+1. Open the repository in Android Studio.
+2. Install Android SDK 35 and use the JDK required by the configured Android Gradle Plugin (8.7.0; JDK 17).
+3. Register an Android app with package name `com.example.robo_survey` in **your own Firebase project** and configure Realtime Database.
+4. Replace `app/google-services.json` with your project's Android configuration. Do not rely on the original project's backend.
+5. Sync Gradle and run on an emulator or device with **Android API 26 or later**.
+6. Supply compatible data at the paths above. Use a test database and test robot when exercising commands.
 
-The current main navigation includes:
+The module compiles against and targets SDK 35. Its Java/Kotlin source compatibility is set to 11; this is separate from the JDK used to run Gradle.
 
-1. Dashboard
-2. Live Feed
-3. Control
-4. Map
-5. Gallery
+From a terminal with the Android SDK and JDK configured:
 
-Additional alert and event-log screens are also implemented in the project source.
+```bash
+# macOS / Linux
+sh ./gradlew assembleDebug
 
-## Tech stack
-
-- Kotlin
-- Jetpack Compose
-- Android ViewModel
-- Kotlin StateFlow
-- Firebase Realtime Database
-- Firebase Cloud Messaging dependencies
-- Navigation Compose
-- Coil for image loading
-- Material 3
-
-## How commands flow
-
-The app writes operator commands to:
-
-```text
-robot/command
+# Windows PowerShell
+.\gradlew.bat assembleDebug
 ```
 
-and operating-mode changes to:
+The expected debug APK path is `app/build/outputs/apk/debug/app-debug.apk`. An Android build was not executed during this documentation update.
 
-```text
-robot/status/mode
-```
+## Code guide
 
-Telemetry is received through Firebase `ValueEventListener` callbacks and pushed into StateFlow objects consumed by the Compose UI.
+| File or directory | Responsibility |
+| --- | --- |
+| [MainActivity.kt](app/src/main/java/com/example/robo_survey/MainActivity.kt) | App entry point and Compose navigation |
+| [RobotViewModel.kt](app/src/main/java/com/example/robo_survey/ui/RobotViewModel.kt) | Database listeners, state streams, command writes |
+| [RobotData.kt](app/src/main/java/com/example/robo_survey/data/RobotData.kt) | Telemetry, logs, images, waypoints, and arm-state models |
+| [ui/screens/](app/src/main/java/com/example/robo_survey/ui/screens) | Monitoring and control presentation |
+| [app/build.gradle.kts](app/build.gradle.kts) | Android SDK settings and dependencies |
 
-## Project structure
+## Engineering focus
 
-```text
-app/src/main/java/com/example/robo_survey/
-├── MainActivity.kt
-├── data/
-│   └── RobotData.kt
-└── ui/
-    ├── RobotViewModel.kt
-    ├── screens/
-    │   ├── DashboardScreen.kt
-    │   ├── LiveFeedScreen.kt
-    │   ├── ControlScreen.kt
-    │   ├── MapScreen.kt
-    │   ├── GalleryScreen.kt
-    │   ├── AlertScreen.kt
-    │   └── EventLogsScreen.kt
-    └── theme/
-```
+- Keeping presentation, data models, and state management separate.
+- Coordinating several real-time data streams in one interface.
+- Sorting logs and waypoints by timestamp before presentation.
+- Using one ViewModel to share robot state across navigation destinations.
 
-## Running the project
+## Current boundaries
 
-1. Open the project in Android Studio.
-2. Add/configure the Firebase project used by the application.
-3. Sync Gradle dependencies.
-4. Run the app on Android API 26 or above.
+Firebase authentication/rules, listener cleanup, comprehensive error/offline handling, the robot command protocol, and hardware integration need further work. The manifest currently allows cleartext traffic for development camera feeds; transport configuration needs review before deployment. Firebase Messaging is a dependency, not evidence of a complete notification delivery implementation.
 
-The current project includes Google Services configuration files, but for a reusable public deployment those credentials/configuration should be replaced with your own Firebase setup.
-
-## What I learned
-
-- structuring an Android app with ViewModel + reactive state
-- listening to and transforming real-time backend data
-- coordinating multiple telemetry streams in one interface
-- building navigation and state-driven screens with Jetpack Compose
-- separating data models, state management, and presentation
-
-## Current limitations / next improvements
-
-- add a documented robot-side communication protocol
-- improve authentication/security rules for Firebase
-- add offline/error-state handling
-- add automated UI and ViewModel tests
-- document the camera-stream format and hardware integration
-- move environment-specific Firebase configuration out of source control where appropriate
-
-## Repository
-
-**GitHub:** https://github.com/suvitkankariya2007-debug/robo_survey
+The connection indicator is based on status-listener callbacks; it is not a dedicated robot heartbeat or a guarantee that the physical device is online. Existing test files are starter examples rather than full ViewModel or device-integration coverage.
